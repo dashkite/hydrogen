@@ -2,7 +2,7 @@ import {Router} from "panda-router"
 
 router = new Router()
 
-route = (template, handler) ->
+map = (template, handler) ->
   router.add {template, data: {handler}}
   router
 
@@ -12,4 +12,4 @@ match = (path) ->
     {bindings, handler}
 
 
-export {router, route, match}
+export {router, map, match}

@@ -1,6 +1,6 @@
 import {pipe, tee, rtee, curry} from "panda-garden"
 import {cat, properties, titleCase, promise, all, isFunction} from "panda-parchment"
-import {route as _route} from "./router"
+import {map} from "./router"
 import {add, glob} from "./indexer"
 
 mix = (type, mixins) -> (pipe mixins...) type
@@ -72,7 +72,7 @@ examples = tee (T) ->
       cat (glob "#{@path}/examples/*"),
         glob "#{@path}/example/*"
 
-route = curry rtee (template, T) -> _route template, T.create
+route = curry rtee (template, T) -> map template, T.create
 
 export {mix, basic, ready, index, data,
   title, content, summary, examples, route}
