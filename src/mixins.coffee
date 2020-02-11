@@ -1,7 +1,6 @@
 import {pipe, tee, rtee, curry} from "panda-garden"
 import {cat, properties, titleCase, promise, all, isFunction} from "panda-parchment"
-import {map} from "./router"
-import {add, glob} from "./indexer"
+import {add, map} from "./store"
 
 mix = (type, mixins) -> (pipe mixins...) type
 
@@ -26,7 +25,7 @@ initialize = (instance, initializers) ->
 
 basic = tee (T) ->
   T.create = (value) -> (new T).initialize value
-  T::initialize = ({@source, @reference, @bindings}) ->
+  T::initialize = ({@store, @source, @reference, @bindings}) ->
     initialize @, T.initializers
   properties T::,
     name: get: -> @reference.name
@@ -42,9 +41,14 @@ ready = curry rtee (f, T) -> (T.initializers ?= []).push f
 
 index = curry rtee (name, T) ->
   # self is a promise for this
-  # don't accidentally return promise, otherwise we'll await on it
   mix T, [
-    ready (self) -> add name, @[name], self ; undefined
+    ready (self) ->
+      add @store,
+        index: name
+        key: @[name]
+        value: self
+      # explicitly return undefined to avoid awaiting
+      undefined
   ]
 
 title = tee (T) ->
@@ -66,13 +70,19 @@ summary = tee (T) ->
   properties T::,
     summary: get: -> @data.summary
 
-examples = tee (T) ->
-  properties T::,
-    examples: get: ->
-      cat (glob "#{@path}/examples/*"),
-        glob "#{@path}/example/*"
-
 route = curry rtee (template, T) -> map template, T.create
 
-export {mix, basic, ready, index, data,
-  title, content, summary, examples, route}
+store = curry rtee (s, T) ->
+  properties T, store: get: -> s
+  properties T::, store: get: -> s
+
+# not a mixin, but used with mixins that take loaders-a loader combinator
+loaders = (fx) ->
+  (args...) ->
+    for f in fx
+      if (result = f args...)?
+        break
+    result
+
+export {mix, basic, ready, index, data, title, content, summary,
+  route, store, loaders}

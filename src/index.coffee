@@ -1,3 +1,2 @@
-export * from "./indexer"
+export * from "./store"
 export * from "./mixins"
-export * from "./router"

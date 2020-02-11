@@ -1,8 +1,10 @@
 import minimatch from "minimatch"
 import {reduce} from "panda-river-esm"
-import {first, last, rest, split,
-  isString, keys, promise, all} from "panda-parchment"
-import {match} from "./router"
+import {first, last, rest, split, keys, all,
+  isString, isArray, isType} from "panda-parchment"
+import Method from "panda-generics"
+import {binary, curry} from "panda-garden"
+import {Router} from "panda-router"
 
 # untility methods for parsing paths
 
@@ -30,52 +32,52 @@ parse = (path) ->
     reference = source
   {source, reference}
 
-# private state shared between index functions
-# TODO should this just be a class?
-# presently, the index is effectively a singleton
-_ =
-  # raw indices, use only for updating
-  $: {}
+class Store
+  @create: -> new Store arguments...
+  constructor: ({@indices = {}, @router = new Router}) ->
 
-# promised indices, resolve after all the handlers are called
-# use for access (find, lookup, glob)
-_.indices = promise (resolve, reject) ->
-  _.resolve = resolve
-  _.reject = reject
+create = -> Store.create arguments...
+
+map = curry tee (store, {template, handler}) ->
+  store.router.add {template, data: {handler}}
+
+match = curry (store, path) ->
+  if (m = store.router.match path)?
+    {bindings, data: {handler}} = m
+    {bindings, handler}
 
 # TODO support URLs
-resources = (paths) ->
-  # This appears to run in like 20 microseconds?
-  # So I haven't bothered doing it via requestAnimationFrame
-  # or in a worker thread or something like that
-  for path in paths
-    {source, reference} = parse path
-    if (m = match reference.path)?
-      {handler, bindings} = m
-      handler {source, reference, bindings}
-  # okay, make the index available for use
-  _.resolve _.$
 
-add = (index, key, value) -> (_.$[index] ?= {})[key] = value
+load = Method.create
+  name: "load"
+  description: "Load a resource into a Hydrogen store"
 
-# WARNING: race conditions may occur for defining and using an alias
-alias = (index, from, to) ->
-  if (value = (await _.indices)[index]?[from])?
-    add index, to, value
+Method.define load, (isType Store), isString, (store, path) ->
+  {source, reference} = parse path
+  if (m = match store, reference.path)?
+    {handler, bindings} = m
+    handler {store, source, reference, bindings}
 
-lookup = (index, key) ->
-  await (await _.indices)[index]?[key]
+Method.define load, (isType Store), isArray, (store, paths) ->
+  all resource store, path for path in paths
 
-find = (key) ->
-  for name, index of (await _.indices)
+load = curry binary load
+
+add = curry (store, {index, key, value}) -> (store.indices[index] ?= {})[key] = value
+
+lookup = curry (store, {index, key}) ->
+  await store.indices[index]?[key]
+
+find = curry (store, key) ->
+  for name, index of store.indices
     return await value if (value = index[key])?
   # explicit return avoids implicit return of array of nulls
   undefined
 
-glob = (pattern) ->
-  dictionary = (await _.indices).path
-  paths = minimatch.match (keys dictionary), pattern
-  await all (dictionary[path] for path in paths)
+glob = curry (store, pattern) ->
+  if (dictionary = store.indices.path)?
+    paths = minimatch.match (keys dictionary), pattern
+    await all (dictionary[path] for path in paths)
 
 # async replace
 replace = (string, re, callback) ->
@@ -107,13 +109,13 @@ replace = (string, re, callback) ->
     # return the final string
     string
 
-links = (html) ->
+links = curry (store, html) ->
   replace html, /\[([^\]]+)\]\[([^\]]+)?\]/g, (match, innerHTML, key) ->
     key ?= innerHTML.replace /<[^>]+>/g, ""
-    if (target = await find key)?
+    if (target = await find store, key)?
       "<a href='#{target.link}'>#{innerHTML}</a>"
     else
       console.warn "Link [#{key}] not found."
       "<a href='#broken'>#{innerHTML}</a>"
 
-export {resources, add, alias, lookup, find, glob, links}
+export {map, match, load, add, lookup, find, glob, links}
