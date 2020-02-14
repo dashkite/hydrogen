@@ -3,7 +3,7 @@ import {reduce} from "panda-river-esm"
 import {first, last, rest, split, keys, all,
   isString, isArray, isType} from "panda-parchment"
 import Method from "panda-generics"
-import {binary, curry} from "panda-garden"
+import {binary, curry, tee} from "panda-garden"
 import {Router} from "panda-router"
 
 # untility methods for parsing paths
@@ -34,7 +34,7 @@ parse = (path) ->
 
 class Store
   @create: -> new Store arguments...
-  constructor: ({@indices = {}, @router = new Router}) ->
+  constructor: ({@indices = {}, @router = new Router} = {}) ->
 
 create = -> Store.create arguments...
 
@@ -59,13 +59,13 @@ Method.define load, (isType Store), isString, (store, path) ->
     handler {store, source, reference, bindings}
 
 Method.define load, (isType Store), isArray, (store, paths) ->
-  all resource store, path for path in paths
+  all ((load store, path) for path in paths)
 
 load = curry binary load
 
 add = curry (store, {index, key, value}) -> (store.indices[index] ?= {})[key] = value
 
-lookup = curry (store, {index, key}) ->
+get = curry (store, {index, key}) ->
   await store.indices[index]?[key]
 
 find = curry (store, key) ->
@@ -118,4 +118,4 @@ links = curry (store, html) ->
       console.warn "Link [#{key}] not found."
       "<a href='#broken'>#{innerHTML}</a>"
 
-export {map, match, load, add, lookup, find, glob, links}
+export default {create, map, match, load, add, get, find, glob, links}

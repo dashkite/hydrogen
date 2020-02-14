@@ -1,6 +1,7 @@
 import {pipe, tee, rtee, curry} from "panda-garden"
-import {cat, properties, titleCase, promise, all, isFunction} from "panda-parchment"
-import {add, map} from "./store"
+import {cat, properties, titleCase,
+  promise, all, isFunction} from "panda-parchment"
+import Store from "./store"
 
 mix = (type, mixins) -> (pipe mixins...) type
 
@@ -24,8 +25,9 @@ initialize = (instance, initializers) ->
   instance
 
 basic = tee (T) ->
-  T.create = (value) -> (new T).initialize value
-  T::initialize = ({@store, @source, @reference, @bindings}) ->
+  T.create = (value) ->
+    (new @).initialize value
+  T::initialize = ({@source, @reference, @bindings}) ->
     initialize @, T.initializers
   properties T::,
     name: get: -> @reference.name
@@ -43,7 +45,7 @@ index = curry rtee (name, T) ->
   # self is a promise for this
   mix T, [
     ready (self) ->
-      add @store,
+      Store.add @store,
         index: name
         key: @[name]
         value: self
@@ -61,7 +63,7 @@ data = curry rtee (load, T) ->
     data: get: -> load @
 
 # TODO is this the best interface?
-# TODO make async
+# TODO make async-maybe use a ready handler?
 content = curry rtee (load, T) ->
   properties T::,
     html: get: -> load @
@@ -70,19 +72,19 @@ summary = tee (T) ->
   properties T::,
     summary: get: -> @data.summary
 
-route = curry rtee (template, T) -> map template, T.create
+route = curry rtee (template, T) ->
+  Store.map T.store, {template, handler: -> T.create arguments...}
 
 store = curry rtee (s, T) ->
   properties T, store: get: -> s
   properties T::, store: get: -> s
 
 # not a mixin, but used with mixins that take loaders-a loader combinator
-loaders = (fx) ->
-  (args...) ->
-    for f in fx
-      if (result = f args...)?
-        break
-    result
+loaders = (fx) -> ->
+  for f in fx
+    if (result = f arguments...)?
+      break
+  result
 
 export {mix, basic, ready, index, data, title, content, summary,
   route, store, loaders}
