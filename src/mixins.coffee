@@ -1,5 +1,5 @@
 import {pipe, tee, rtee, curry} from "panda-garden"
-import {cat, properties, titleCase,
+import {cat, properties, titleCase, plainText,
   promise, all, isFunction} from "panda-parchment"
 import Store from "./store"
 
@@ -55,7 +55,7 @@ index = curry rtee (name, T) ->
 
 title = tee (T) ->
   properties T::,
-    title: get: -> @data?.title ? titleCase @name
+    title: get: -> @data?.title ? titleCase plainText @name
   mix T, [ index "title" ]
 
 data = curry rtee (load, T) ->
