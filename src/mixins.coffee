@@ -5,6 +5,10 @@ import Store from "./store"
 
 mix = (type, mixins) -> (pipe mixins...) type
 
+getter = getters = curry rtee (dictionary, T) ->
+  for key, fn of dictionary
+    properties T::, [key]: get: fn
+
 warrant = ->
   _ = {}
   _.promise = promise (resolve, reject) ->
@@ -29,12 +33,12 @@ basic = tee (T) ->
     (new @).initialize value
   T::initialize = ({@source, @reference, @bindings}) ->
     initialize @, T.initializers
-  properties T::,
-    name: get: -> @reference.name
-    path: get: -> @reference.path
-    link: get: -> @path
-    parent: get: -> @reference.parent
   mix T, [
+    getters
+      name: -> @reference.name
+      path: -> @reference.path
+      link: -> @path
+      parent: -> @reference.parent
     index "name"
     index "path"
   ]
@@ -54,23 +58,17 @@ index = curry rtee (name, T) ->
   ]
 
 title = tee (T) ->
-  properties T::,
-    title: get: -> @data?.title ? titleCase plainText @name
-  mix T, [ index "title" ]
+  mix T, [
+    getter title: -> @data?.title ? titleCase plainText @name
+    index "title" ]
 
-data = curry rtee (load, T) ->
-  properties T::,
-    data: get: -> load @
+data = (load) -> getter data: -> load @
 
 # TODO is this the best interface?
 # TODO make async-maybe use a ready handler?
-content = curry rtee (load, T) ->
-  properties T::,
-    html: get: -> load @
+content = (load) -> getter html: -> load @
 
-summary = tee (T) ->
-  properties T::,
-    summary: get: -> @data.summary
+summary = getter summary: -> @data.summary
 
 route = curry rtee (template, T) ->
   Store.map T.store, {template, handler: -> T.create arguments...}
@@ -86,5 +84,6 @@ loaders = (fx) -> ->
       break
   result
 
-export {mix, basic, ready, index, data, title, content, summary,
+export {mix, getter, getters, basic, ready, index,
+  data, title, content, summary,
   route, store, loaders}
