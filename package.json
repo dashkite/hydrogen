@@ -1,1 +1,39 @@
-{"name":"@dashkite/hydrogen","version":"0.0.3","description":"Hydrate resouces into JavaScript objects","files":["./build"],"main":"build/npm/src/index.js","scripts":{"test":"p9k test"},"repository":{"type":"git","url":"git+https://github.com/dashkite/hydrogen.git"},"keywords":["hydrate","serialize","deserialize","resource"],"author":"Dan Yoder","license":"SEE LICENSE IN LICENSE.md","bugs":{"url":"https://github.com/dashkite/hydrogen/issues"},"homepage":"https://github.com/dashkite/hydrogen#readme","dependencies":{"minimatch":"^3.0.4","panda-garden":"^5.0.0","panda-parchment":"^6.0.3","panda-river-esm":"^6.0.0","panda-router":"^2.1.0"},"devDependencies":{"panda-9000":"^5.0.2","panda-builder":"^4.0.13"}}
+{
+  "name": "@dashkite/hydrogen",
+  "version": "0.0.3",
+  "description": "Hydrate resouces into JavaScript objects",
+  "files": [
+    "./build"
+  ],
+  "main": "build/npm/src/index.js",
+  "scripts": {
+    "test": "p9k test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dashkite/hydrogen.git"
+  },
+  "keywords": [
+    "hydrate",
+    "serialize",
+    "deserialize",
+    "resource"
+  ],
+  "author": "Dan Yoder",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "bugs": {
+    "url": "https://github.com/dashkite/hydrogen/issues"
+  },
+  "homepage": "https://github.com/dashkite/hydrogen#readme",
+  "dependencies": {
+    "minimatch": "^3.0.4",
+    "panda-garden": "^5.0.0",
+    "panda-parchment": "^6.0.3",
+    "panda-river-esm": "^6.0.0",
+    "panda-router": "^2.1.0"
+  },
+  "devDependencies": {
+    "panda-9000": "^5.0.2",
+    "panda-builder": "^4.0.13"
+  }
+}
